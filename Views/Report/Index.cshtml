@@ -1,0 +1,188 @@
+@model EmployeeAttendanceApp.Models.ViewModels.AttendanceReportViewModel
+@{
+    ViewData["Title"] = "Attendance & Audit Reports";
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Executive Attendance & Audit Reports
+            </h2>
+            <p class="text-secondary mb-0">
+                Generate date-range telemetry, compliance summaries, and exportable attendance spreadsheets.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Report/ExportCsv?fromDate=@Model.FromDate.ToString("yyyy-MM-dd")&toDate=@Model.ToDate.ToString("yyyy-MM-dd")&department=@Model.Department&status=@Model.Status&search=@Model.SearchTerm" class="btn btn-outline-success d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-excel-fill fs-5"></i>
+                <span>Export CSV Spreadsheet</span>
+            </a>
+            <button type="button" class="btn-apex-secondary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Summary
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="glass-panel p-3">
+        <form method="get" action="/Report" class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <label class="apex-label" style="margin-bottom: 4px;">From Date</label>
+                <input type="date" name="fromDate" class="apex-input font-mono" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="apex-label" style="margin-bottom: 4px;">To Date</label>
+                <input type="date" name="toDate" class="apex-input font-mono" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="apex-label" style="margin-bottom: 4px;">Department</label>
+                <select name="department" class="apex-input">
+                    <option value="All">All Departments</option>
+                    @foreach (var d in Model.Departments)
+                    {
+                        <option value="@d.Name" selected="@(Model.Department == d.Name)">@d.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="apex-label" style="margin-bottom: 4px;">Status Filter</label>
+                <select name="status" class="apex-input">
+                    <option value="All">All Statuses</option>
+                    <option value="Present" selected="@(Model.Status == "Present")">On Time / Present</option>
+                    <option value="Late" selected="@(Model.Status == "Late")">Late Arrival</option>
+                    <option value="Half-Day" selected="@(Model.Status == "Half-Day")">Half-Day</option>
+                    <option value="Overtime" selected="@(Model.Status == "Overtime")">Overtime</option>
+                </select>
+            </div>
+            <div class="col-md-9">
+                <input type="text" name="search" class="apex-input" placeholder="Search by employee name or code..." value="@Model.SearchTerm" />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn-apex-primary w-100">
+                    <i class="bi bi-funnel-fill"></i> Generate Report
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="glass-panel p-3">
+                <div class="text-secondary small">Total Logged Punches</div>
+                <div class="fs-3 fw-bold text-white font-mono">@Model.TotalPunches</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-panel p-3">
+                <div class="text-secondary small">Total Cumulative Hours</div>
+                <div class="fs-3 fw-bold text-cyan font-mono">@Model.TotalHoursWorked.ToString("F2") hrs</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-panel p-3">
+                <div class="text-secondary small">Average Shift Duration</div>
+                <div class="fs-3 fw-bold text-success font-mono">@Model.AverageHoursPerDay.ToString("F2") hrs/shift</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master Report Ledger -->
+    <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="h5 fw-bold text-white mb-0">Attendance Audit Ledger</h4>
+            <span class="text-muted small font-mono">Showing @Model.Records.Count records</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="apex-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Punch In</th>
+                        <th>Punch Out</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Match Conf.</th>
+                        <th>Terminal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Records.Any())
+                    {
+                        foreach (var item in Model.Records)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="text-white font-mono">@item.Date.ToString("yyyy-MM-dd")</span>
+                                </td>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">
+                                            @if (!string.IsNullOrEmpty(item.PunchInPhoto))
+                                            {
+                                                <img src="@item.PunchInPhoto" alt="@item.EmployeeName" />
+                                            }
+                                            else
+                                            {
+                                                <span>@item.EmployeeName.Substring(0, 1)</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-white">@item.EmployeeName</div>
+                                            <div class="text-muted font-mono" style="font-size: 11px;">@item.EmployeeCode</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">@item.Department</span>
+                                </td>
+                                <td>
+                                    <span class="text-white font-mono">@item.PunchInTime.ToString("hh:mm:ss tt")</span>
+                                </td>
+                                <td>
+                                    @(item.PunchOutTime.HasValue ? item.PunchOutTime.Value.ToString("hh:mm:ss tt") : "Active Shift")
+                                </td>
+                                <td>
+                                    <span class="text-white font-mono fw-bold">@item.TotalWorkHours.ToString("F2") hrs</span>
+                                </td>
+                                <td>
+                                    @if (item.Status == "Present")
+                                    {
+                                        <span class="badge-status badge-present">On Time</span>
+                                    }
+                                    else if (item.Status == "Late")
+                                    {
+                                        <span class="badge-status badge-late">Late</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-status badge-halfday">@item.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-success font-mono">@item.MatchConfidence%</span>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small">@item.DeviceLocation</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                No records found for the selected date range.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

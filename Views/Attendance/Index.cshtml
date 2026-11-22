@@ -1,0 +1,176 @@
+@model List<EmployeeAttendanceApp.Models.AttendanceRecord>
+@{
+    ViewData["Title"] = "Biometric Attendance Console";
+    var employees = ViewBag.Employees as List<EmployeeAttendanceApp.Models.Employee> ?? new();
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Header Banner -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Biometric Attendance Console
+            </h2>
+            <p class="text-secondary mb-0">
+                Live facial recognition punches, shift verification, and audit logs.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-apex-primary" data-bs-toggle="modal" data-bs-target="#quickPunchModal">
+                <i class="bi bi-camera-fill"></i>
+                <span>Scan Face to Punch</span>
+            </button>
+            <a href="/Attendance/Kiosk" target="_blank" class="btn-apex-kiosk">
+                <i class="bi bi-display"></i>
+                <span>Launch Kiosk</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Active Summary Pill Bar -->
+    <div class="glass-panel p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="avatar-circle" style="background: rgba(6, 182, 212, 0.15); color: #38bdf8; border-color: rgba(6, 182, 212, 0.3);">
+                <i class="bi bi-calendar-check-fill fs-5"></i>
+            </div>
+            <div>
+                <div class="text-muted small">Active Date Filter</div>
+                <div class="fw-bold text-white font-mono">@DateTime.Today.ToString("dddd, MMMM dd, yyyy")</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-4">
+            <div>
+                <span class="text-muted small d-block">Today's Total Punches</span>
+                <span class="fw-bold text-cyan font-mono fs-5">@Model.Count</span>
+            </div>
+            <div>
+                <span class="text-muted small d-block">On-Time Passes</span>
+                <span class="fw-bold text-success font-mono fs-5">@Model.Count(r => r.Status == "Present")</span>
+            </div>
+            <div>
+                <span class="text-muted small d-block">Late Arrivals</span>
+                <span class="fw-bold text-warning font-mono fs-5">@Model.Count(r => r.Status == "Late")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records Table -->
+    <div class="glass-panel p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="h5 fw-bold text-white mb-0">Today's Attendance Roster</h4>
+            <div class="text-muted small font-mono">
+                <i class="bi bi-shield-check text-success me-1"></i> 100% Euclidean Distance Verified
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="apex-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Punch In</th>
+                        <th>Punch Out</th>
+                        <th>Work Duration</th>
+                        <th>Verification Status</th>
+                        <th>Confidence</th>
+                        <th>Terminal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">
+                                            @if (!string.IsNullOrEmpty(item.PunchInPhoto))
+                                            {
+                                                <img src="@item.PunchInPhoto" alt="@item.EmployeeName" />
+                                            }
+                                            else
+                                            {
+                                                <span>@item.EmployeeName.Substring(0, 1)</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-white">@item.EmployeeName</div>
+                                            <div class="text-muted font-mono" style="font-size: 11px;">@item.EmployeeCode</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">@item.Department</span>
+                                </td>
+                                <td>
+                                    <span class="text-white font-mono">@item.PunchInTime.ToString("hh:mm:ss tt")</span>
+                                </td>
+                                <td>
+                                    @if (item.PunchOutTime.HasValue)
+                                    {
+                                        <span class="text-white font-mono">@item.PunchOutTime.Value.ToString("hh:mm:ss tt")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-25 text-info font-mono">ACTIVE SHIFT</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.PunchOutTime.HasValue)
+                                    {
+                                        <span class="text-white font-mono fw-bold">@item.TotalWorkHours.ToString("F2") hrs</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted font-mono" style="font-size: 12px;">Tracking...</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Status == "Present")
+                                    {
+                                        <span class="badge-status badge-present"><i class="bi bi-check-circle-fill"></i> On Time</span>
+                                    }
+                                    else if (item.Status == "Late")
+                                    {
+                                        <span class="badge-status badge-late"><i class="bi bi-clock-fill"></i> Late</span>
+                                    }
+                                    else if (item.Status == "Half-Day")
+                                    {
+                                        <span class="badge-status badge-halfday"><i class="bi bi-hourglass-split"></i> Half-Day</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-status badge-overtime"><i class="bi bi-lightning-fill"></i> @item.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="confidence-meter-container" style="width: 50px; height: 6px;">
+                                            <div class="confidence-meter-fill bg-success" style="width: @item.MatchConfidence%;"></div>
+                                        </div>
+                                        <span class="font-mono text-success fw-bold" style="font-size: 11px;">@item.MatchConfidence%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small">@item.DeviceLocation</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-person-bounding-box fs-1 d-block mb-2 text-secondary"></i>
+                                No attendance records found for today. Use "Scan Face to Punch" to check in.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

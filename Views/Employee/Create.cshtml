@@ -1,0 +1,329 @@
+@model EmployeeAttendanceApp.Models.Employee
+@{
+    ViewData["Title"] = "Register & Enroll Employee";
+    var departments = ViewBag.Departments as List<EmployeeAttendanceApp.Models.Department> ?? new();
+}
+
+<div class="d-flex flex-column gap-4" style="max-width: 900px; margin: 0 auto;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Register & Biometrically Enroll Staff
+            </h2>
+            <p class="text-secondary mb-0">
+                Create employee profile and capture unique 128-dimensional facial embedding vector.
+            </p>
+        </div>
+        <a href="/Employee" class="btn-apex-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Directory
+        </a>
+    </div>
+
+    @if (ViewBag.DuplicateError != null)
+    {
+        <div class="alert alert-danger p-3 d-flex align-items-center gap-3 border-danger">
+            <i class="bi bi-exclamation-octagon-fill fs-3 text-danger"></i>
+            <div>
+                <div class="fw-bold fs-6">DUPLICATE FACE REJECTED</div>
+                <div>@ViewBag.DuplicateError</div>
+            </div>
+        </div>
+    }
+
+    <!-- Registration Form -->
+    <form asp-action="Create" method="post" id="createEmployeeForm" class="d-flex flex-column gap-4">
+        @Html.AntiForgeryToken()
+
+        <!-- 1. Profile Details Card -->
+        <div class="glass-panel p-4">
+            <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-person-lines-fill text-cyan"></i>
+                <span>1. Personal & Corporate Identity</span>
+            </h5>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="apex-label">Full Name <span class="text-danger">*</span></label>
+                    <input type="text" asp-for="FullName" id="employeeFullName" class="apex-input" placeholder="e.g. Rachel Adams" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="apex-label">Corporate Email <span class="text-danger">*</span></label>
+                    <input type="email" asp-for="Email" class="apex-input" placeholder="rachel.adams@apex.io" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="apex-label">Employee Code</label>
+                    <input type="text" asp-for="EmployeeCode" class="apex-input font-mono" placeholder="Auto-generated if empty (e.g. APX-106)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="apex-label">Phone Number</label>
+                    <input type="tel" asp-for="Phone" class="apex-input" placeholder="+1 (555) 000-0000" />
+                </div>
+                <div class="col-md-4">
+                    <label class="apex-label">Department</label>
+                    <select asp-for="Department" class="apex-input">
+                        @foreach (var d in departments)
+                        {
+                            <option value="@d.Name">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="apex-label">Designation / Role</label>
+                    <input type="text" asp-for="Designation" class="apex-input" placeholder="e.g. Lead Software Architect" />
+                </div>
+                <div class="col-md-6">
+                    <label class="apex-label">Assigned Shift Schedule</label>
+                    <select asp-for="ShiftType" class="apex-input">
+                        <option value="Standard (09:00 - 18:00)">Standard Shift (09:00 AM - 06:00 PM)</option>
+                        <option value="Early Morning (08:00 - 17:00)">Early Morning (08:00 AM - 05:00 PM)</option>
+                        <option value="Executive Flexible (10:00 - 19:00)">Executive Flexible (10:00 AM - 07:00 PM)</option>
+                        <option value="Night Operations (20:00 - 05:00)">Night Operations (08:00 PM - 05:00 AM)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Biometric Face Scanning & Vector Extraction -->
+        <div class="glass-panel p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-camera-video-fill text-cyan"></i>
+                    <span>2. Biometric Face Vector Enrollment (Unique Check Enforced)</span>
+                </h5>
+                <span id="enrollStatusBadge" class="badge bg-secondary font-mono px-3 py-1">
+                    AWAITING SCAN
+                </span>
+            </div>
+
+            <p class="text-secondary small mb-4">
+                Activate the webcam to capture the employee's facial features and extract the 128-dimensional embedding vector. 
+                <span class="text-warning fw-semibold">The system strictly prevents duplicate registrations of the same face.</span>
+            </p>
+
+            <div class="row g-4 align-items-center">
+                <div class="col-md-7 text-center">
+                    <div class="biometric-scanner-box" style="max-width: 440px;">
+                        <video id="enrollVideo" class="scanner-video" autoplay playsinline muted></video>
+                        <canvas id="enrollCanvas" class="scanner-canvas-overlay"></canvas>
+                        
+                        <div class="scanner-hud">
+                            <div class="hud-corner top-left"></div>
+                            <div class="hud-corner top-right"></div>
+                            <div class="hud-corner bottom-left"></div>
+                            <div class="hud-corner bottom-right"></div>
+                            <div id="enrollFaceOval" class="hud-face-target"></div>
+                            <div class="scanner-laser"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <button type="button" id="btnStartEnrollCam" class="btn-apex-secondary btn-sm" onclick="startEnrollmentCamera()">
+                            <i class="bi bi-camera-video"></i> Start Webcam
+                        </button>
+                        <button type="button" id="btnCaptureFace" class="btn-apex-primary btn-sm" onclick="captureAndEnrollFace()" disabled>
+                            <i class="bi bi-fingerprint"></i> Capture & Vectorize Face
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="glass-panel p-3 border-secondary border-opacity-25">
+                        <div class="fw-bold text-white mb-2 small text-uppercase font-mono text-cyan">
+                            Biometric Capture Preview
+                        </div>
+                        
+                        <div id="previewContainer" class="text-center py-4 bg-black bg-opacity-40 rounded mb-3" style="min-height: 160px; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-muted small">No facial snapshot captured yet.</span>
+                        </div>
+
+                        <div class="small text-secondary mb-2">
+                            <span>128-D Vector Checksum:</span>
+                            <span id="vectorChecksum" class="font-mono text-white d-block text-truncate">None</span>
+                        </div>
+
+                        <div id="enrollSuccessAlert" class="alert alert-success d-none py-2 px-3 small border-success mb-0">
+                            <i class="bi bi-check-circle-fill me-1"></i> Unique facial descriptor verified & ready for enrollment.
+                        </div>
+
+                        <div id="enrollDuplicateAlert" class="alert alert-danger d-none py-2 px-3 small border-danger mb-0">
+                            <i class="bi bi-x-octagon-fill me-1"></i> <strong>Duplicate Face:</strong> Registration blocked.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden Fields for Descriptor & Photo -->
+            <input type="hidden" asp-for="FaceDescriptorJson" id="hiddenFaceDescriptor" />
+            <input type="hidden" asp-for="ProfilePhotoUrl" id="hiddenProfilePhoto" />
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-flex justify-content-end gap-3 pb-5">
+            <a href="/Employee" class="btn-apex-secondary px-4">Cancel</a>
+            <button type="submit" id="btnSaveEmployee" class="btn-apex-primary px-5 py-3 fs-6">
+                <i class="bi bi-check2-circle fs-5"></i>
+                <span>Save Employee Profile</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.apexBiometrics) {
+                await window.apexBiometrics.loadEnrolledProfiles();
+            }
+        });
+
+        async function startEnrollmentCamera() {
+            const video = document.getElementById('enrollVideo');
+            const canvas = document.getElementById('enrollCanvas');
+            const res = await window.apexBiometrics.startCamera(video, canvas);
+            if (res.success) {
+                document.getElementById('btnCaptureFace').disabled = false;
+                document.getElementById('btnStartEnrollCam').classList.add('d-none');
+                document.getElementById('enrollFaceOval').classList.add('aligned');
+                document.getElementById('enrollStatusBadge').className = 'badge bg-info bg-opacity-25 text-info font-mono px-3 py-1';
+                document.getElementById('enrollStatusBadge').textContent = 'CAMERA ACTIVE - ALIGN FACE';
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Camera Access Needed',
+                    text: 'Unable to start camera stream. You can still save the profile and enroll facial descriptor later.',
+                    background: '#0d1424',
+                    color: '#fff',
+                    confirmButtonColor: '#06b6d4'
+                });
+            }
+        }
+
+        async function captureAndEnrollFace() {
+            const descriptorResult = window.apexBiometrics.extractDescriptorFromVideo();
+
+            if (!descriptorResult || descriptorResult.error) {
+                const msg = descriptorResult && descriptorResult.error ? descriptorResult.error : 'Please ensure your webcam is actively showing face in the guide oval.';
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Face Quality Insufficient',
+                    text: msg,
+                    background: '#0d1424',
+                    color: '#fff'
+                });
+                return;
+            }
+
+            const descriptor = descriptorResult;
+            const photo = window.apexBiometrics.captureSnapshot(0.85);
+
+            if (!photo) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Snapshot Failed',
+                    text: 'Could not capture face snapshot from video feed.',
+                    background: '#0d1424',
+                    color: '#fff'
+                });
+                return;
+            }
+
+            // -------------------------------------------------------------
+            // DUPLICATE FACE VERIFICATION (Client-side & Server-side check)
+            // -------------------------------------------------------------
+            // 1. Client-Side Fast Check
+            const clientCheck = window.apexBiometrics.checkDuplicate(descriptor);
+
+            // 2. Server-Side Database Check
+            let serverCheck = { isDuplicate: false };
+            try {
+                const resp = await fetch('/api/biometric/check-duplicate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ descriptorJson: JSON.stringify(descriptor) })
+                });
+                if (resp.ok) {
+                    serverCheck = await resp.json();
+                }
+            } catch (err) {
+                console.warn("Server duplicate check error", err);
+            }
+
+            const isDuplicate = clientCheck.isDuplicate || serverCheck.isDuplicate;
+            const existingEmp = serverCheck.existingEmployee || (clientCheck.existingEmployee ? {
+                fullName: clientCheck.existingEmployee.fullName,
+                employeeCode: clientCheck.existingEmployee.employeeCode,
+                department: clientCheck.existingEmployee.department
+            } : null);
+
+            if (isDuplicate && existingEmp) {
+                // CLEAR inputs - REJECT REGISTRATION OF THIS FACE
+                document.getElementById('hiddenFaceDescriptor').value = '';
+                document.getElementById('hiddenProfilePhoto').value = '';
+
+                // UI Rejection Feedback
+                document.getElementById('enrollStatusBadge').className = 'badge bg-danger text-white font-mono px-3 py-1';
+                document.getElementById('enrollStatusBadge').textContent = 'DUPLICATE FACE REJECTED';
+
+                document.getElementById('enrollSuccessAlert').classList.add('d-none');
+                document.getElementById('enrollDuplicateAlert').classList.remove('d-none');
+
+                const preview = document.getElementById('previewContainer');
+                preview.innerHTML = `
+                    <div class="text-danger p-2 text-center">
+                        <i class="bi bi-x-circle-fill fs-1 d-block mb-1"></i>
+                        <span class="fw-bold d-block">Duplicate Face Detected</span>
+                        <span class="small text-secondary">Belongs to: ${existingEmp.fullName} (${existingEmp.employeeCode})</span>
+                    </div>
+                `;
+                document.getElementById('vectorChecksum').textContent = 'REJECTED - NOT ENROLLED';
+
+                // Audio warning
+                window.apexBiometrics.playWarningSound();
+
+                // Prominent Alert Box
+                Swal.fire({
+                    icon: 'error',
+                    title: 'DUPLICATE FACE DETECTED',
+                    html: `
+                        <div class="text-start py-2">
+                            <p class="text-danger fw-bold mb-3">This face is already registered with another employee. Duplicate registration is not allowed.</p>
+                            <div class="p-3 bg-black bg-opacity-50 rounded border border-danger">
+                                <div class="text-white mb-1"><strong>Existing Employee:</strong> <span class="text-cyan fw-bold">${existingEmp.fullName}</span></div>
+                                <div class="text-white mb-1"><strong>Employee ID:</strong> <span class="font-mono text-warning">${existingEmp.employeeCode}</span></div>
+                                <div class="text-white"><strong>Department:</strong> ${existingEmp.department || 'General'}</div>
+                            </div>
+                        </div>
+                    `,
+                    background: '#0d1424',
+                    color: '#fff',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+
+            // -------------------------------------------------------------
+            // UNIQUE FACE CONFIRMED - PROCEED TO ENROLL
+            // -------------------------------------------------------------
+            document.getElementById('hiddenFaceDescriptor').value = JSON.stringify(descriptor);
+            document.getElementById('hiddenProfilePhoto').value = photo;
+
+            // Update preview
+            const preview = document.getElementById('previewContainer');
+            preview.innerHTML = `<img src="${photo}" style="max-height: 150px; border-radius: 8px; border: 2px solid #10b981;" alt="Enrolled Face" />`;
+
+            // Display Checksum
+            const hash = descriptor.slice(0, 4).map(v => Math.abs(Math.round(v * 10000)).toString(16)).join('-');
+            document.getElementById('vectorChecksum').textContent = `SHA: 0x${hash}...[128 Floats Unique]`;
+
+            // Status updates
+            document.getElementById('enrollStatusBadge').className = 'badge bg-success bg-opacity-25 text-success font-mono px-3 py-1';
+            document.getElementById('enrollStatusBadge').textContent = 'UNIQUE FACE VERIFIED & ENROLLED';
+            document.getElementById('enrollSuccessAlert').classList.remove('d-none');
+            document.getElementById('enrollDuplicateAlert').classList.add('d-none');
+
+            // Audio FX
+            window.apexBiometrics.playSuccessChime();
+        }
+    </script>
+}

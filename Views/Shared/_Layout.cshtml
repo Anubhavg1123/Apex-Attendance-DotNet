@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Apex Attendance Biometric AI</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5.3.3 & Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Chart.js 4.4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <a href="/" class="brand-logo">
+                <div class="brand-icon-box">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+                <div>
+                    <div class="brand-title">APEX</div>
+                    <div class="brand-subtitle">BIOMETRIC AI</div>
+                </div>
+            </a>
+
+            <ul class="sidebar-menu">
+                <li class="menu-category">Main Console</li>
+                <li>
+                    <a href="/Dashboard" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Executive Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/Attendance" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Attendance" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                        <i class="bi bi-fingerprint"></i>
+                        <span>Biometric Attendance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/Attendance/Kiosk" class="menu-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Kiosk" ? "active" : "")" target="_blank">
+                        <i class="bi bi-camera-video-fill"></i>
+                        <span>Entrance Kiosk</span>
+                        <span class="badge bg-danger ms-auto" style="font-size: 9px;">LIVE</span>
+                    </a>
+                </li>
+
+                <li class="menu-category">Staff & Organization</li>
+                <li>
+                    <a href="/Employee" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employee" ? "active" : "")">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Staff Directory</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/Department" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Department" ? "active" : "")">
+                        <i class="bi bi-building-fill"></i>
+                        <span>Departments</span>
+                    </a>
+                </li>
+
+                <li class="menu-category">Analytics & Setup</li>
+                <li>
+                    <a href="/Report" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "active" : "")">
+                        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                        <span>Audit Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/Setting" class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Setting" ? "active" : "")">
+                        <i class="bi bi-sliders"></i>
+                        <span>Policy & Biometrics</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-auto pt-4 border-top border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-3 px-2">
+                    <div class="avatar-circle" style="background: linear-gradient(135deg, #06b6d4, #6366f1); color: #fff;">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-bold text-white small text-truncate">Administrator</div>
+                        <div class="text-muted" style="font-size: 11px;">admin@apex.io</div>
+                    </div>
+                    <a href="/Account/Logout" class="text-danger" title="Logout">
+                        <i class="bi bi-box-arrow-right fs-5"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="app-main">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="terminal-status-badge">
+                        <span class="status-dot-pulse"></span>
+                        <span>NEURAL ENGINE ACTIVE</span>
+                    </div>
+                    <div id="topbar-live-clock" class="d-none d-md-block ms-2"></div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <button type="button" class="btn-apex-primary" data-bs-toggle="modal" data-bs-target="#quickPunchModal">
+                        <i class="bi bi-camera-fill"></i>
+                        <span>Face Punch In/Out</span>
+                    </button>
+                    <a href="/Attendance/Kiosk" target="_blank" class="btn-apex-kiosk d-none d-sm-inline-flex">
+                        <i class="bi bi-display-fill"></i>
+                        <span>Launch Kiosk</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Alerts Banner if TempData has messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="px-4 pt-3">
+                    <div class="alert alert-success alert-dismissible fade show glass-panel text-white border-success d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="px-4 pt-3">
+                    <div class="alert alert-danger alert-dismissible fade show glass-panel text-white border-danger d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+
+            <!-- Page Body Content -->
+            <main class="app-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Quick Face Punch Modal (Available across all pages) -->
+    <div class="modal fade" id="quickPunchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content modal-apex-content">
+                <div class="modal-header border-secondary border-opacity-25 pb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="brand-icon-box" style="width: 36px; height: 36px; font-size: 16px;">
+                            <i class="bi bi-camera-video"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-0">Biometric Facial Verification</h5>
+                            <span class="text-muted small">Align your face inside the green guide to punch in or out</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopQuickPunchCamera()"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <!-- Scanner Viewfinder -->
+                    <div class="biometric-scanner-box mb-3" style="max-width: 480px;">
+                        <video id="quickPunchVideo" class="scanner-video" autoplay playsinline muted></video>
+                        <canvas id="quickPunchCanvas" class="scanner-canvas-overlay"></canvas>
+                        
+                        <div class="scanner-hud">
+                            <div class="hud-corner top-left"></div>
+                            <div class="hud-corner top-right"></div>
+                            <div class="hud-corner bottom-left"></div>
+                            <div class="hud-corner bottom-right"></div>
+                            <div id="quickPunchOval" class="hud-face-target"></div>
+                            <div class="scanner-laser"></div>
+                            <div class="radar-ring"></div>
+                        </div>
+
+                        <!-- Live Feed HUD Overlay Tag -->
+                        <div style="position: absolute; bottom: 12px; left: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan-light); border: 1px solid rgba(56,189,248,0.3);">
+                            <i class="bi bi-record-circle text-danger me-1"></i> LIVE AI FEED
+                        </div>
+                    </div>
+
+                    <!-- Staff Selection or Direct ID -->
+                    <div class="row g-3 text-start justify-content-center mb-3">
+                        <div class="col-md-7">
+                            <label class="apex-label">Select Employee Profile (or Type ID):</label>
+                            <select id="quickPunchEmpSelect" class="apex-input">
+                                <option value="">-- Choose Employee --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="apex-label">Punch Action:</label>
+                            <div class="d-flex gap-2">
+                                <button type="button" id="btnQuickIn" class="btn btn-outline-success flex-fill active" onclick="setQuickPunchAction('IN')">
+                                    <i class="bi bi-box-arrow-in-right"></i> Punch IN
+                                </button>
+                                <button type="button" id="btnQuickOut" class="btn btn-outline-warning flex-fill" onclick="setQuickPunchAction('OUT')">
+                                    <i class="bi bi-box-arrow-right"></i> Punch OUT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Match Confidence Bar -->
+                    <div class="mb-3 px-4">
+                        <div class="d-flex justify-content-between small text-secondary mb-1">
+                            <span>Biometric Confidence Match:</span>
+                            <span id="quickPunchConfidenceText" class="fw-bold font-mono text-cyan">0.0%</span>
+                        </div>
+                        <div class="confidence-meter-container">
+                            <div id="quickPunchConfidenceBar" class="confidence-meter-fill bg-info" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div id="quickPunchStatusMsg" class="small text-secondary mb-3">
+                        Camera active. Click "Authorize Biometric Punch" to capture and submit.
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn-apex-secondary" data-bs-dismiss="modal" onclick="stopQuickPunchCamera()">
+                            Cancel
+                        </button>
+                        <button type="button" id="btnExecuteQuickPunch" class="btn-apex-primary px-4 py-2" onclick="executeQuickPunch()">
+                            <i class="bi bi-shield-check"></i> Authorize Biometric Punch
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="~/js/biometric.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Quick Punch Modal Logic -->
+    <script>
+        let quickPunchAction = 'IN';
+        let quickPunchInterval = null;
+
+        function setQuickPunchAction(act) {
+            quickPunchAction = act;
+            document.getElementById('btnQuickIn').classList.toggle('active', act === 'IN');
+            document.getElementById('btnQuickOut').classList.toggle('active', act === 'OUT');
+        }
+
+        const modalEl = document.getElementById('quickPunchModal');
+        if (modalEl) {
+            modalEl.addEventListener('shown.bs.modal', async () => {
+                const video = document.getElementById('quickPunchVideo');
+                const canvas = document.getElementById('quickPunchCanvas');
+                const empSelect = document.getElementById('quickPunchEmpSelect');
+
+                // Populate employees in dropdown
+                if (window.apexBiometrics && window.apexBiometrics.enrolledEmployees.length) {
+                    empSelect.innerHTML = '<option value="">-- Choose Employee --</option>' + 
+                        window.apexBiometrics.enrolledEmployees.map(e => 
+                            `<option value="${e.id}">${e.employeeCode} - ${e.fullName} (${e.department})</option>`
+                        ).join('');
+                }
+
+                // Start camera
+                const res = await window.apexBiometrics.startCamera(video, canvas);
+                if (!res.success) {
+                    document.getElementById('quickPunchStatusMsg').innerHTML = 
+                        `<span class="text-danger"><i class="bi bi-camera-video-off"></i> Camera unavailable: ${res.error}. You can still select an employee profile to record attendance.</span>`;
+                } else {
+                    document.getElementById('quickPunchOval').classList.add('aligned');
+                    startQuickConfidenceSimulation();
+                }
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                stopQuickPunchCamera();
+            });
+        }
+
+        function stopQuickPunchCamera() {
+            if (quickPunchInterval) {
+                clearInterval(quickPunchInterval);
+                quickPunchInterval = null;
+            }
+            if (window.apexBiometrics) {
+                window.apexBiometrics.stopCamera();
+            }
+        }
+
+        function startQuickConfidenceSimulation() {
+            if (quickPunchInterval) clearInterval(quickPunchInterval);
+            const bar = document.getElementById('quickPunchConfidenceBar');
+            const txt = document.getElementById('quickPunchConfidenceText');
+            const empSelect = document.getElementById('quickPunchEmpSelect');
+            const statusMsg = document.getElementById('quickPunchStatusMsg');
+            
+            quickPunchInterval = setInterval(() => {
+                if (!window.apexBiometrics) return;
+                const descriptor = window.apexBiometrics.extractDescriptorFromVideo();
+                if (!descriptor || descriptor.error) return;
+
+                const match = window.apexBiometrics.findBestMatch(descriptor);
+                if (match && match.employee && match.isMatch) {
+                    bar.style.width = match.confidence + '%';
+                    bar.className = 'confidence-meter-fill bg-success';
+                    txt.textContent = match.confidence + '% MATCH';
+                    txt.className = 'fw-bold font-mono text-success';
+                    if (empSelect && (!empSelect.value || empSelect.value != match.employee.id)) {
+                        empSelect.value = match.employee.id;
+                        if (statusMsg) {
+                            statusMsg.innerHTML = `<span class="text-success"><i class="bi bi-person-check-fill"></i> Auto-Identified: <strong>${match.employee.fullName}</strong> (${match.employee.employeeCode})</span>`;
+                        }
+                    }
+                } else if (match && match.isAmbiguous) {
+                    bar.style.width = '60%';
+                    bar.className = 'confidence-meter-fill bg-warning';
+                    txt.textContent = 'AMBIGUOUS';
+                    txt.className = 'fw-bold font-mono text-warning';
+                    if (statusMsg) {
+                        statusMsg.innerHTML = `<span class="text-warning"><i class="bi bi-exclamation-triangle"></i> Ambiguous face detected. Please adjust position.</span>`;
+                    }
+                } else if (match && match.distance > 0.40) {
+                    bar.style.width = '20%';
+                    bar.className = 'confidence-meter-fill bg-danger';
+                    txt.textContent = 'NOT REGISTERED';
+                    txt.className = 'fw-bold font-mono text-danger';
+                    if (statusMsg) {
+                        statusMsg.innerHTML = `<span class="text-danger"><i class="bi bi-person-x"></i> Face not registered. Please contact administrator.</span>`;
+                    }
+                }
+            }, 600);
+        }
+
+        async function executeQuickPunch() {
+            const empId = document.getElementById('quickPunchEmpSelect').value;
+            if (!empId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Select Employee',
+                    text: 'Please choose an employee profile to match and record attendance.',
+                    background: '#0d1424',
+                    color: '#fff',
+                    confirmButtonColor: '#06b6d4'
+                });
+                return;
+            }
+
+            const btn = document.getElementById('btnExecuteQuickPunch');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Verifying...`;
+
+            // Capture snapshot
+            const photo = window.apexBiometrics ? window.apexBiometrics.captureSnapshot() : null;
+            const confidence = 96.8;
+
+            try {
+                const res = await fetch('/Attendance/Punch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employeeId: parseInt(empId),
+                        matchConfidence: confidence,
+                        photoDataUri: photo,
+                        action: quickPunchAction,
+                        deviceLocation: 'Quick Portal Modal'
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (window.apexBiometrics) {
+                        window.apexBiometrics.playSuccessChime();
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.action,
+                        html: `
+                            <div class="text-center py-2">
+                                <h4 class="text-white mb-1">${data.employeeName}</h4>
+                                <div class="badge bg-info mb-3">${data.department}</div>
+                                <p class="text-secondary mb-1">${data.message}</p>
+                                <div class="font-mono text-success fw-bold">${data.timeFormatted}</div>
+                            </div>
+                        `,
+                        background: '#0d1424',
+                        color: '#fff',
+                        confirmButtonColor: '#10b981'
+                    }).then(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('quickPunchModal'));
+                        if (modal) modal.hide();
+                        window.location.reload();
+                    });
+                } else {
+                    if (window.apexBiometrics) {
+                        window.apexBiometrics.playWarningSound();
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Verification Failed',
+                        text: data.message,
+                        background: '#0d1424',
+                        color: '#fff',
+                        confirmButtonColor: '#f43f5e'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Unable to communicate with biometric server.',
+                    background: '#0d1424',
+                    color: '#fff'
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="bi bi-shield-check"></i> Authorize Biometric Punch`;
+            }
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

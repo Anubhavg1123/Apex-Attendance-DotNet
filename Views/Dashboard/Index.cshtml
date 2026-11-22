@@ -1,0 +1,364 @@
+@model EmployeeAttendanceApp.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Executive Dashboard";
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Welcome Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Executive Attendance Analytics
+            </h2>
+            <p class="text-secondary mb-0">
+                Real-time biometric facial tracking, punctuality telemetry, and workforce status.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Attendance/Kiosk" target="_blank" class="btn-apex-kiosk">
+                <i class="bi bi-display"></i>
+                <span>Open Entrance Kiosk</span>
+            </a>
+            <a href="/Employee/Create" class="btn-apex-primary">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Add & Enroll Staff</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 High-Tech Stat Metric Cards -->
+    <div class="row g-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="glass-panel glass-panel-glow stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value text-white">@Model.TotalEmployees</div>
+                        <div class="stat-label">Total Registered Staff</div>
+                    </div>
+                    <div class="stat-icon cyan">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1 mt-3 small text-muted">
+                    <span class="text-info fw-semibold font-mono"><i class="bi bi-shield-check"></i> 100%</span>
+                    <span>Biometric directory active</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="glass-panel glass-panel-glow stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value text-success">@Model.PresentToday</div>
+                        <div class="stat-label">Present / On Time Today</div>
+                    </div>
+                    <div class="stat-icon emerald">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1 mt-3 small text-muted">
+                    <span class="text-success fw-semibold font-mono">@Model.AttendanceRatePercentage%</span>
+                    <span>Overall attendance rate</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="glass-panel glass-panel-glow stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value text-warning">@Model.LateToday</div>
+                        <div class="stat-label">Late Arrivals</div>
+                    </div>
+                    <div class="stat-icon amber">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1 mt-3 small text-muted">
+                    <span class="text-warning fw-semibold font-mono">> @Model.Policy.LateGraceMinutes mins</span>
+                    <span>past shift policy</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="glass-panel glass-panel-glow stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value text-danger">@Model.AbsentToday</div>
+                        <div class="stat-label">Absent / Unpunched</div>
+                    </div>
+                    <div class="stat-icon rose">
+                        <i class="bi bi-person-x-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1 mt-3 small text-muted">
+                    <span class="text-secondary fw-semibold font-mono">@(Model.TotalEmployees - Model.AbsentToday)/@Model.TotalEmployees</span>
+                    <span>checked into premises</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4">
+        <!-- 7-Day Attendance Volume -->
+        <div class="col-lg-8">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="h5 fw-bold text-white mb-0">7-Day Attendance Trajectory</h4>
+                        <span class="text-muted small">Daily volume of on-time, late, and absent personnel</span>
+                    </div>
+                    <div class="badge bg-secondary bg-opacity-25 text-info font-mono px-3 py-2 border border-info border-opacity-25">
+                        <i class="bi bi-activity me-1"></i> TELEMETRY
+                    </div>
+                </div>
+                <div style="height: 290px;">
+                    <canvas id="sevenDayChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Distribution -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="h5 fw-bold text-white mb-0">Department Presence</h4>
+                        <span class="text-muted small">Headcount presence per division</span>
+                    </div>
+                    <i class="bi bi-pie-chart text-secondary"></i>
+                </div>
+                <div style="height: 230px; position: relative;">
+                    <canvas id="deptChart"></canvas>
+                </div>
+                <div class="mt-3 pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between text-muted small">
+                    <span>Active Divisions: <strong class="text-white">@Model.DepartmentStats.Count</strong></span>
+                    <span>Shift: <strong class="text-white font-mono">@Model.Policy.ShiftStartTime - @Model.Policy.ShiftEndTime</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Live Attendance Table -->
+    <div class="glass-panel p-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4">
+            <div>
+                <h4 class="h5 fw-bold text-white mb-0">Live Biometric Attendance Stream</h4>
+                <span class="text-muted small">Real-time facial scans and check-in audit records for today</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/Attendance" class="btn-apex-secondary py-1 px-3 small">
+                    <span>View All Master Logs</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="apex-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Punch In</th>
+                        <th>Punch Out</th>
+                        <th>Status</th>
+                        <th>Match Conf.</th>
+                        <th>Device Terminal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RecentAttendance.Any())
+                    {
+                        foreach (var item in Model.RecentAttendance)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">
+                                            @if (!string.IsNullOrEmpty(item.PunchInPhoto))
+                                            {
+                                                <img src="@item.PunchInPhoto" alt="@item.EmployeeName" />
+                                            }
+                                            else
+                                            {
+                                                <span>@item.EmployeeName.Substring(0, 1)</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-white">@item.EmployeeName</div>
+                                            <div class="text-muted font-mono" style="font-size: 11px;">@item.EmployeeCode</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">@item.Department</span>
+                                </td>
+                                <td>
+                                    <span class="text-white font-mono">@item.PunchInTime.ToString("hh:mm:ss tt")</span>
+                                </td>
+                                <td>
+                                    @if (item.PunchOutTime.HasValue)
+                                    {
+                                        <span class="text-white font-mono">@item.PunchOutTime.Value.ToString("hh:mm:ss tt")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-25 text-info font-mono">ACTIVE SHIFT</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Status == "Present")
+                                    {
+                                        <span class="badge-status badge-present"><i class="bi bi-check-circle-fill"></i> On Time</span>
+                                    }
+                                    else if (item.Status == "Late")
+                                    {
+                                        <span class="badge-status badge-late"><i class="bi bi-clock-fill"></i> Late</span>
+                                    }
+                                    else if (item.Status == "Half-Day")
+                                    {
+                                        <span class="badge-status badge-halfday"><i class="bi bi-hourglass-split"></i> Half-Day</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-status badge-overtime"><i class="bi bi-lightning-fill"></i> @item.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="confidence-meter-container" style="width: 60px; height: 6px;">
+                                            <div class="confidence-meter-fill bg-success" style="width: @item.MatchConfidence%;"></div>
+                                        </div>
+                                        <span class="font-mono text-success fw-bold" style="font-size: 12px;">@item.MatchConfidence%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small"><i class="bi bi-geo-alt-fill text-cyan me-1"></i>@item.DeviceLocation</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                                No biometric attendance records logged for today yet.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Seven Day Attendance Volume Chart
+            const trendData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Last7DaysTrend));
+            const labels = trendData.map(d => d.DayName + ' (' + d.DateFormatted + ')');
+            const presentCounts = trendData.map(d => d.Present);
+            const lateCounts = trendData.map(d => d.Late);
+            const absentCounts = trendData.map(d => d.Absent);
+
+            const ctx1 = document.getElementById('sevenDayChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'On Time',
+                            data: presentCounts,
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderColor: '#10b981',
+                            borderRadius: 6,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Late',
+                            data: lateCounts,
+                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                            borderColor: '#f59e0b',
+                            borderRadius: 6,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Absent',
+                            data: absentCounts,
+                            backgroundColor: 'rgba(244, 63, 94, 0.4)',
+                            borderColor: '#f43f5e',
+                            borderRadius: 6,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { family: 'Outfit', size: 12 } }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', stepSize: 1, font: { family: 'Outfit', size: 12 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc', font: { family: 'Outfit', size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // 2. Department Breakdown Donut Chart
+            const deptData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DepartmentStats));
+            const deptLabels = deptData.map(d => d.DepartmentName);
+            const deptCounts = deptData.map(d => d.TotalStaff);
+
+            const ctx2 = document.getElementById('deptChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        data: deptCounts,
+                        backgroundColor: [
+                            '#06b6d4',
+                            '#6366f1',
+                            '#8b5cf6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ec4899'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#0e1626'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#cbd5e1', font: { family: 'Outfit', size: 11 }, boxWidth: 12 }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

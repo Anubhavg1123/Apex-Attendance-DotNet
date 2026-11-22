@@ -1,0 +1,49 @@
+{
+  "Employees": [],
+  "AttendanceRecords": [],
+  "Departments": [
+    {
+      "Id": 1,
+      "Name": "Engineering",
+      "Description": "Software Engineering, Cloud, & Systems Architecture",
+      "ShiftStartTime": "09:00",
+      "ShiftEndTime": "18:00",
+      "GraceMinutes": 15,
+      "EmployeeCount": 0
+    },
+    {
+      "Id": 2,
+      "Name": "Human Resources",
+      "Description": "People Operations, Talent & Culture",
+      "ShiftStartTime": "09:00",
+      "ShiftEndTime": "18:00",
+      "GraceMinutes": 15,
+      "EmployeeCount": 0
+    }
+  ],
+  "Users": [
+    {
+      "Id": 1,
+      "Username": "admin",
+      "PasswordHash": "4Xn6lHj2r9vL4Vq4K9l6mQ==",
+      "Role": "Admin",
+      "FullName": "System Administrator"
+    }
+  ],
+  "Policy": {
+    "Id": 1,
+    "CompanyName": "Apex Technologies Biometric Systems",
+    "ShiftStartTime": "09:00",
+    "ShiftEndTime": "18:00",
+    "LateGraceMinutes": 15,
+    "HalfDayMinimumHours": 4.5,
+    "StandardWorkHours": 8.0,
+    "RequiredMatchConfidence": 90.0,
+    "AutoCheckoutAtMidnight": true,
+    "AllowKioskDirectPunches": true
+  },
+  "NextEmployeeId": 1,
+  "NextAttendanceId": 1,
+  "NextDepartmentId": 3,
+  "NextUserId": 2
+}

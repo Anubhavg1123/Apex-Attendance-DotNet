@@ -1,0 +1,132 @@
+@model List<EmployeeAttendanceApp.Models.Department>
+@{
+    ViewData["Title"] = "Department Management";
+}
+
+<div class="d-flex flex-column gap-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Corporate Departments & Divisions
+            </h2>
+            <p class="text-secondary mb-0">
+                Organize organizational units, department shift rules, and staff counts.
+            </p>
+        </div>
+        <button type="button" class="btn-apex-primary" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+            <i class="bi bi-plus-lg"></i> Add New Department
+        </button>
+    </div>
+
+    <!-- Department Cards Grid -->
+    <div class="row g-4">
+        @foreach (var dept in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="glass-panel glass-panel-glow p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="h5 fw-bold text-white mb-0">@dept.Name</h4>
+                            <span class="badge bg-info bg-opacity-25 text-cyan font-mono">
+                                @dept.EmployeeCount Staff
+                            </span>
+                        </div>
+                        <p class="text-secondary small mb-3" style="min-height: 40px;">
+                            @(string.IsNullOrEmpty(dept.Description) ? "Corporate Division" : dept.Description)
+                        </p>
+
+                        <div class="p-3 rounded bg-black bg-opacity-30 border border-secondary border-opacity-25 small mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Shift Timing:</span>
+                                <span class="text-white font-mono">@dept.ShiftStartTime - @dept.ShiftEndTime</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Grace Period:</span>
+                                <span class="text-warning font-mono">@dept.GraceMinutes mins</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25">
+                        <a href="/Employee?department=@dept.Name" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-people"></i> View Members
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDept(@dept.Id, '@dept.Name')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-apex-content">
+            <div class="modal-header border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white">Create Department</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4 d-flex flex-column gap-3">
+                    <div>
+                        <label class="apex-label">Department Name</label>
+                        <input type="text" name="Name" class="apex-input" placeholder="e.g. Artificial Intelligence Research" required />
+                    </div>
+                    <div>
+                        <label class="apex-label">Description</label>
+                        <textarea name="Description" class="apex-input" rows="2" placeholder="Brief division overview"></textarea>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="apex-label">Shift Start Time</label>
+                            <input type="time" name="ShiftStartTime" class="apex-input font-mono" value="09:00" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="apex-label">Shift End Time</label>
+                            <input type="time" name="ShiftEndTime" class="apex-input font-mono" value="18:00" required />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="apex-label">Grace Threshold (minutes)</label>
+                        <input type="number" name="GraceMinutes" class="apex-input font-mono" value="15" min="0" max="60" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary border-opacity-25">
+                    <button type="button" class="btn-apex-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-apex-primary">Save Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteDept(id, name) {
+            Swal.fire({
+                title: 'Delete Department?',
+                text: `Remove ${name}? Employees in this division will remain in the database.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f43f5e',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Yes, Delete',
+                background: '#0d1424',
+                color: '#fff'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const res = await fetch(`/Department/Delete?id=${id}`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    }
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,26 @@
+## Build and runtime outputs
+bin/
+obj/
+out/
+publish/
+
+## Visual Studio & Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Sensitive and Production Data
+# Protect employee biometric profiles and live attendance logs
+App_Data/attendance_database.json
+App_Data/*.tmp
+*.log
+
+## OS and Environment files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Aa]ppsettings.Production.json
+[Aa]ppsettings.*.local.json

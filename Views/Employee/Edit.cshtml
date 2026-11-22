@@ -1,0 +1,79 @@
+@model EmployeeAttendanceApp.Models.Employee
+@{
+    ViewData["Title"] = $"Edit {Model.FullName}";
+    var departments = ViewBag.Departments as List<EmployeeAttendanceApp.Models.Department> ?? new();
+}
+
+<div class="d-flex flex-column gap-4" style="max-width: 800px; margin: 0 auto;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                Edit Employee Record
+            </h2>
+            <p class="text-secondary mb-0">
+                Update details for @Model.FullName (@Model.EmployeeCode)
+            </p>
+        </div>
+        <a href="/Employee" class="btn-apex-secondary">
+            <i class="bi bi-arrow-left"></i> Cancel
+        </a>
+    </div>
+
+    <form asp-action="Edit" method="post" class="glass-panel p-4 d-flex flex-column gap-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="EmployeeCode" />
+        <input type="hidden" asp-for="FaceDescriptorJson" />
+        <input type="hidden" asp-for="ProfilePhotoUrl" />
+        <input type="hidden" asp-for="IsFaceEnrolled" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="apex-label">Full Name</label>
+                <input type="text" asp-for="FullName" class="apex-input" required />
+            </div>
+            <div class="col-md-6">
+                <label class="apex-label">Email Address</label>
+                <input type="email" asp-for="Email" class="apex-input" required />
+            </div>
+            <div class="col-md-6">
+                <label class="apex-label">Phone</label>
+                <input type="tel" asp-for="Phone" class="apex-input" />
+            </div>
+            <div class="col-md-6">
+                <label class="apex-label">Department</label>
+                <select asp-for="Department" class="apex-input">
+                    @foreach (var d in departments)
+                    {
+                        <option value="@d.Name">@d.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="apex-label">Designation</label>
+                <input type="text" asp-for="Designation" class="apex-input" />
+            </div>
+            <div class="col-md-6">
+                <label class="apex-label">Shift Schedule</label>
+                <select asp-for="ShiftType" class="apex-input">
+                    <option value="Standard (09:00 - 18:00)">Standard Shift (09:00 AM - 06:00 PM)</option>
+                    <option value="Early Morning (08:00 - 17:00)">Early Morning (08:00 AM - 05:00 PM)</option>
+                    <option value="Executive Flexible (10:00 - 19:00)">Executive Flexible (10:00 AM - 07:00 PM)</option>
+                </select>
+            </div>
+            <div class="col-md-12 mt-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" asp-for="IsActive" id="activeSwitch" />
+                    <label class="form-check-label text-white ms-2" for="activeSwitch">Active Status (Permitted to Punch at Kiosks)</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <a href="/Employee" class="btn-apex-secondary px-4">Cancel</a>
+            <button type="submit" class="btn-apex-primary px-4">
+                <i class="bi bi-check-lg"></i> Update Profile
+            </button>
+        </div>
+    </form>
+</div>
