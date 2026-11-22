@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeAttendanceApp.Services;
 
 namespace EmployeeAttendanceApp.Controllers;
 
+[Authorize]
 public class ReportController : Controller
 {
     private readonly IReportService _reportService;

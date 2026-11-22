@@ -28,6 +28,7 @@ public class BiometricApiController : ControllerBase
     [HttpGet("employees")]
     public IActionResult GetEnrolledEmployees()
     {
+        bool isAuthenticated = User.Identity?.IsAuthenticated == true;
         var list = _db.Employees
             .Where(e => e.IsActive)
             .Select(e => new
@@ -38,7 +39,7 @@ public class BiometricApiController : ControllerBase
                 e.Department,
                 e.Designation,
                 e.IsFaceEnrolled,
-                e.FaceDescriptorJson,
+                FaceDescriptorJson = isAuthenticated ? e.FaceDescriptorJson : null,
                 e.ProfilePhotoUrl
             })
             .ToList();
@@ -179,6 +180,7 @@ public class BiometricApiController : ControllerBase
         return Ok(result);
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize]
     [HttpPost("enroll")]
     public async Task<IActionResult> Enroll([FromBody] EnrollFaceModel model)
     {

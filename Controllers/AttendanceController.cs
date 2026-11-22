@@ -16,6 +16,7 @@ public class AttendanceController : Controller
         _employeeService = employeeService;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> Index()
     {
         var todayRecords = await _attendanceService.GetTodayAttendanceAsync();

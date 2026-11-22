@@ -36,7 +36,7 @@ public class AccountController : Controller
         var user = await _authService.AuthenticateAsync(model.Username, model.Password);
         if (user == null)
         {
-            ModelState.AddModelError("", "Invalid credentials. For Admin access use: admin / Admin@123");
+            ModelState.AddModelError("", "Invalid username or password.");
             return View(model);
         }
 

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeAttendanceApp.Data;
 using EmployeeAttendanceApp.Models;
 
 namespace EmployeeAttendanceApp.Controllers;
 
+[Authorize]
 public class DepartmentController : Controller
 {
     private readonly ApplicationDbContext _db;

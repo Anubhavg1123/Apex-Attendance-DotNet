@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeAttendanceApp.Models;
 using EmployeeAttendanceApp.Models.ViewModels;
@@ -5,6 +6,7 @@ using EmployeeAttendanceApp.Services;
 
 namespace EmployeeAttendanceApp.Controllers;
 
+[Authorize]
 public class EmployeeController : Controller
 {
     private readonly IEmployeeService _employeeService;

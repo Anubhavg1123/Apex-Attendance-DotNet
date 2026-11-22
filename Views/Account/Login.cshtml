@@ -96,11 +96,6 @@
             <button type="submit" class="btn-apex-primary py-2 mt-2 w-100 justify-content-center">
                 <i class="bi bi-box-arrow-in-right"></i> Sign In to Portal
             </button>
-
-            <!-- Quick Auto-Fill Helper -->
-            <button type="button" class="btn btn-outline-secondary btn-sm text-secondary border-opacity-25 mt-1" onclick="autoFillAdmin()">
-                <i class="bi bi-magic text-cyan me-1"></i> Auto-Fill Admin Credentials (admin / Admin@123)
-            </button>
         </form>
 
         <div class="mt-4 pt-4 border-top border-secondary border-opacity-25 text-center">
@@ -110,12 +105,5 @@
             </a>
         </div>
     </div>
-
-    <script>
-        function autoFillAdmin() {
-            document.getElementById('loginUsername').value = 'admin';
-            document.getElementById('loginPassword').value = 'Admin@123';
-        }
-    </script>
 </body>
 </html>

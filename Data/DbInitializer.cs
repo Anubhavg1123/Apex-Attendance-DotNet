@@ -20,17 +20,24 @@ public static class DbInitializer
 
     public static Task InitializeAsync(ApplicationDbContext context)
     {
-        // 1. Seed Admin User
-        if (!context.Users.Any(u => u.Username.Equals("admin", StringComparison.OrdinalIgnoreCase)))
+        // 1. Seed or Upgrade Admin User with Secure Password
+        var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "ApexAdmin@2026!Prod";
+        var devHash = HashPassword("Admin@123");
+        var adminUser = context.Users.FirstOrDefault(u => u.Username.Equals("admin", StringComparison.OrdinalIgnoreCase));
+        if (adminUser == null)
         {
             context.Users.Add(new UserAccount
             {
                 Id = context.GetNextUserId(),
                 Username = "admin",
-                PasswordHash = HashPassword("Admin@123"),
+                PasswordHash = HashPassword(adminPassword),
                 Role = "Admin",
                 FullName = "System Administrator"
             });
+        }
+        else if (adminUser.PasswordHash == devHash || Environment.GetEnvironmentVariable("ADMIN_PASSWORD") != null)
+        {
+            adminUser.PasswordHash = HashPassword(adminPassword);
         }
 
         // 2. Seed Policy

@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeAttendanceApp.Services;
 
 namespace EmployeeAttendanceApp.Controllers;
 
+[Authorize]
 public class DashboardController : Controller
 {
     private readonly IAttendanceService _attendanceService;
