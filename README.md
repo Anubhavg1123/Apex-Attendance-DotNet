@@ -91,9 +91,9 @@ dotnet run -c Release
 ```
 Navigate to: `http://localhost:5000` (or `https://localhost:5001`)
 
-### 4. Default Administrative Credentials
+### 4. Administrative Access & Credentials
 - **Username:** `admin`
-- **Password:** `Admin@123`
+- **Password:** Configured via `ADMIN_PASSWORD` environment variable (defaults to configured development secret in local dev, and requires or cryptographically generates a secure secret in Production). Never commit credentials to version control.
 
 ---
 
@@ -102,7 +102,7 @@ Navigate to: `http://localhost:5000` (or `https://localhost:5001`)
 ### Multi-Stage Dockerfile Execution
 ```bash
 docker build -t apex-attendance:latest .
-docker run -d -p 8080:8080 -v attendance_data:/data -e DATA_DIR=/data apex-attendance:latest
+docker run -d -p 8080:8080 -v attendance_data:/data -e DATA_DIR=/data -e ADMIN_PASSWORD=YourSecureSecret!2026 apex-attendance:latest
 ```
 
 ### Railway Deployment Steps
@@ -110,9 +110,10 @@ docker run -d -p 8080:8080 -v attendance_data:/data -e DATA_DIR=/data apex-atten
 2. In [Railway.com](https://railway.com/), create a **New Project** -> **Deploy from GitHub repo**.
 3. Select `Apex-Attendance-DotNet`. Railway will automatically detect `Dockerfile` and `railway.json`.
 4. Under **Settings** -> **Volumes**, add a Persistent Volume mounted at `/data`.
-5. Set the Environment Variable:
+5. Set Environment Variables:
    - `DATA_DIR` = `/data`
    - `ASPNETCORE_ENVIRONMENT` = `Production`
+   - `ADMIN_PASSWORD` = `<your-unique-production-password>`
 6. Click **Generate Domain** under Networking to obtain your live production HTTPS URL.
 
 ---

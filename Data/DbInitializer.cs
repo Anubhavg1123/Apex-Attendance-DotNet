@@ -21,7 +21,20 @@ public static class DbInitializer
     public static Task InitializeAsync(ApplicationDbContext context)
     {
         // 1. Seed or Upgrade Admin User with Secure Password
-        var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "ApexAdmin@2026!Prod";
+        var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            var isProd = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Production", StringComparison.OrdinalIgnoreCase);
+            if (isProd)
+            {
+                // In production, generate a cryptographically secure random secret if none was explicitly configured
+                adminPassword = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)) + "!A1";
+            }
+            else
+            {
+                adminPassword = "ApexAdmin@2026!Prod";
+            }
+        }
         var devHash = HashPassword("Admin@123");
         var adminUser = context.Users.FirstOrDefault(u => u.Username.Equals("admin", StringComparison.OrdinalIgnoreCase));
         if (adminUser == null)

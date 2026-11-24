@@ -432,20 +432,23 @@
         });
 
         // Continuous Neural Scan Loop
+        let isServerIdentifying = false;
+
         function startKioskContinuousScanning() {
             if (scanInterval) clearInterval(scanInterval);
 
             scanInterval = setInterval(async () => {
-                if (isKioskCooldown) return;
+                if (isKioskCooldown || isServerIdentifying) return;
 
                 // Extract live descriptor
                 const descriptor = window.apexBiometrics.extractDescriptorFromVideo();
                 if (!descriptor || descriptor.error) return;
 
-                // Match against active enrolled employees
-                const matchResult = window.apexBiometrics.findBestMatch(descriptor);
                 const badge = document.getElementById('kioskConfidenceBadge');
                 const oval = document.getElementById('kioskFaceOval');
+
+                // Match against active enrolled employees if descriptors are loaded locally
+                const matchResult = window.apexBiometrics.findBestMatch(descriptor);
 
                 if (matchResult && matchResult.employee && matchResult.isMatch) {
                     oval.className = 'kiosk-target-oval detected';
@@ -459,18 +462,60 @@
                     badge.textContent = 'AMBIGUOUS BIOMETRIC MATCH';
                     badge.className = 'text-warning fw-bold';
                     showAmbiguousCard();
-                } else if (matchResult && matchResult.distance > 0.40) {
+                } else if (matchResult && matchResult.employee && matchResult.distance > 0.40) {
                     // Face is present, but NO employee matches this face
                     oval.className = 'kiosk-target-oval rejected';
                     badge.textContent = 'NOT REGISTERED';
                     badge.className = 'text-danger fw-bold';
                     showUnknownFaceCard();
                 } else {
-                    oval.className = 'kiosk-target-oval detected';
-                    badge.textContent = 'SCANNING FOR REGISTERED STAFF...';
-                    badge.className = 'text-info fw-bold';
+                    // Secure server-side biometric matching (zero descriptor leakage to public kiosk clients)
+                    isServerIdentifying = true;
+                    try {
+                        const photo = window.apexBiometrics.captureSnapshot(0.85);
+                        const res = await fetch('/api/biometric/identify-and-punch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                descriptorJson: JSON.stringify(descriptor),
+                                photoDataUri: photo,
+                                deviceLocation: 'HQ Main Entrance Kiosk'
+                            })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.recognized && data.employee && data.punch) {
+                                isKioskCooldown = true;
+                                oval.className = 'kiosk-target-oval detected';
+                                badge.textContent = `${data.confidence}% MATCH: ${data.employee.fullName.toUpperCase()}`;
+                                badge.className = 'text-success fw-bold';
+
+                                window.apexBiometrics.playSuccessChime();
+                                window.apexBiometrics.speak(`Welcome, ${data.employee.fullName}. Attendance registered.`);
+                                showCelebrationCard(data.punch, data.employee, photo);
+                                prependKioskFeed(data.punch, photo);
+
+                                setTimeout(() => { isKioskCooldown = false; }, 6000);
+                            } else if (data.isAmbiguous) {
+                                oval.className = 'kiosk-target-oval rejected';
+                                badge.textContent = 'AMBIGUOUS BIOMETRIC MATCH';
+                                badge.className = 'text-warning fw-bold';
+                                showAmbiguousCard();
+                            } else if (data.distance > 0.40 || !data.recognized) {
+                                oval.className = 'kiosk-target-oval rejected';
+                                badge.textContent = 'NOT REGISTERED';
+                                badge.className = 'text-danger fw-bold';
+                                showUnknownFaceCard();
+                            }
+                        }
+                    } catch (err) {
+                        console.warn("Server-side identification error", err);
+                    } finally {
+                        isServerIdentifying = false;
+                    }
                 }
-            }, 800);
+            }, 900);
         }
 
         async function triggerKioskPunch(employee, confidence) {
