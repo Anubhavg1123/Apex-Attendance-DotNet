@@ -184,3 +184,18 @@ ALL 10/10 AUTOMATED VERIFICATION CHECKS PASSED WITH ZERO ERRORS
 
 - All automated background tasks, test web servers, and subagent processes have been cleanly terminated.
 - Working directory is clean, zero dangling locks.
+
+---
+
+## K. Antigravity Platform Browser Capabilities Audit & Authorization Boundaries
+
+### 1. Assessment of Native Browser & Desktop Interaction
+- **Official Documentation Review:** Audited Google Antigravity core platform specifications (`https://antigravity.google/docs/ide/browser.md`) and runtime plugin accounts.
+- **Architectural Implementation:** Antigravity relies exclusively on the **Chrome DevTools Model Context Protocol (MCP) server** (`npx chrome-devtools-mcp@latest`) to automate browser tasks via Chrome DevTools Protocol (CDP).
+- **Independent Desktop Interactor:** Antigravity does **not** feature an independent proprietary browser engine or an operating-system-level mouse/keyboard clicker detached from Chrome DevTools.
+- **Connection Requirements:** For the agent to control your local browser session, Google Chrome must be configured via `chrome://inspect/#remote-debugging` ("Allow remote debugging for this browser instance") with prompt approval granted.
+
+### 2. Authorization Gate Status (Railway & InfinityFree)
+- **Railway:** Direct automated API creation is gated by Railway CLI installation (which failed previously) or user session cookies. Autonomous click-through requires the interactive Chrome DevTools session or user authorization on `railway.com/new`.
+- **InfinityFree:** Account management and file uploads operate behind Cloudflare Turnstile anti-bot gates and session-specific cPanel credentials. Autonomous background uploads are strictly gated until credentials or an interactive session are authorized.
+- **Next Direct Action:** Authorize the 3-click trigger on `railway.com/new` and drop the ready bundle into InfinityFree cPanel. All files, security patches, models, and Docker configs are pre-staged and 100% verified.
