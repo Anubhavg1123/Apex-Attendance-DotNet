@@ -24,3 +24,6 @@ Thumbs.db
 ehthumbs.db
 [Aa]ppsettings.Production.json
 [Aa]ppsettings.*.local.json
+
+.vercel
+.env*

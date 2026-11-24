@@ -3,7 +3,7 @@
 [![Framework](https://img.shields.io/badge/Framework-.NET%208%20ASP.NET%20Core-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Language](https://img.shields.io/badge/Language-C%23%2012-239120?logo=c-sharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![Biometrics](https://img.shields.io/badge/AI%20Biometrics-face--api.js%20(TinyFace)-FF6F00)](https://github.com/justadudewhohacks/face-api.js)
-[![Container](https://img.shields.io/badge/Deployment-Docker%20%7C%20Railway-0B2545?logo=docker)](https://railway.com/)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel%20OCI%20Container-000000?logo=vercel)](https://apex-attendance-dotnet.vercel.app)
 [![License](https://img.shields.io/badge/License-Academic%20Evaluation-blue)](#academic-metadata)
 
 > **Enterprise-grade ASP.NET Core .NET 8 employee attendance management platform utilizing client-side 68-point neural facial landmark extraction, 128-dimensional Euclidean feature matching, automated kiosk punch processing, and thread-safe persistent data storage.**
@@ -97,24 +97,22 @@ Navigate to: `http://localhost:5000` (or `https://localhost:5001`)
 
 ---
 
-## 🐳 Docker & Cloud Deployment (Railway)
+## 🐳 Docker & Cloud Deployment (Vercel)
 
-### Multi-Stage Dockerfile Execution
+### Live Production Deployment
+- **Production URL:** [https://apex-attendance-dotnet.vercel.app](https://apex-attendance-dotnet.vercel.app)
+- **Deployment Platform:** Vercel OCI Container Engine (Fluid Compute Container Runtime)
+- **Framework Specification:** `container` (`vercel.json`)
+- **Port Binding:** Dynamically binds to `$PORT` (80 / 8080) with `ForwardedHeaders` reverse proxy SSL termination
+
+### Direct Vercel CLI Deployment
 ```bash
-docker build -t apex-attendance:latest .
-docker run -d -p 8080:8080 -v attendance_data:/data -e DATA_DIR=/data -e ADMIN_PASSWORD=YourSecureSecret!2026 apex-attendance:latest
-```
+# Link project to Vercel
+vercel link --project apex-attendance-dotnet --yes
 
-### Railway Deployment Steps
-1. Push your repository to GitHub: `https://github.com/Anubhavg1123/Apex-Attendance-DotNet`.
-2. In [Railway.com](https://railway.com/), create a **New Project** -> **Deploy from GitHub repo**.
-3. Select `Apex-Attendance-DotNet`. Railway will automatically detect `Dockerfile` and `railway.json`.
-4. Under **Settings** -> **Volumes**, add a Persistent Volume mounted at `/data`.
-5. Set Environment Variables:
-   - `DATA_DIR` = `/data`
-   - `ASPNETCORE_ENVIRONMENT` = `Production`
-   - `ADMIN_PASSWORD` = `<your-unique-production-password>`
-6. Click **Generate Domain** under Networking to obtain your live production HTTPS URL.
+# Deploy production container with environment secrets
+vercel deploy --prod --yes -e ADMIN_PASSWORD=YourSecureSecret!2026 -e ASPNETCORE_ENVIRONMENT=Production -e DATA_DIR=/tmp
+```
 
 ---
 

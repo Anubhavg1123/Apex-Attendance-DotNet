@@ -48,7 +48,16 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Configure Forwarded Headers for reverse proxies (Vercel, Cloudflare, Linux Containers)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+app.UseForwardedHeaders();
 
 // Seed Database automatically on startup
 using (var scope = app.Services.CreateScope())
@@ -77,7 +86,10 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    ServeUnknownFileTypes = true
+});
 
 app.UseRouting();
 

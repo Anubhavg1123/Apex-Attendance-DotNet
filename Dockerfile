@@ -21,13 +21,11 @@ COPY --from=build /app/publish .
 
 # Cloud environment settings
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS=http://+:80;http://+:8080
 ENV PORT=8080
-ENV DATA_DIR=/data
+ENV DATA_DIR=/tmp
 
+EXPOSE 80
 EXPOSE 8080
-
-# Mountable persistent storage directory
-VOLUME ["/data"]
 
 ENTRYPOINT ["dotnet", "EmployeeAttendanceApp.dll"]

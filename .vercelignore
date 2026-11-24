@@ -1,0 +1,9 @@
+App_Data/attendance_database.json
+App_Data/*.tmp
+*.log
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
